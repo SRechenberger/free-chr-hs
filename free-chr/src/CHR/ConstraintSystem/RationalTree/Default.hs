@@ -1,6 +1,6 @@
-module CHR.RationalTree.Term where
+module CHR.ConstraintSystem.RationalTree.Default where
 
-import CHR.RationalTree.Term.Class
+import CHR.ConstraintSystem.RationalTree.Generic
 
 data Term c v
   = Constant c
@@ -21,3 +21,11 @@ instance RationalTree (Term c v) where
 
   arguments (Compound _ as) = as
   arguments _ = []
+
+
+data Equal c v =
+  Term c v `Eq` Term c v
+
+instance EqConstraint (Term c v) where
+  type Constraint (Term c v) = Equal c v
+  eq = Eq
