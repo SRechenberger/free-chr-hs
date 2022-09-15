@@ -122,14 +122,21 @@ rule name kept removed guard body = Solver { runSolver = solver }
 (<.>) :: Monad m => Solver m c -> Solver m c -> Solver m c
 (<.>) = (<>)
 
+
 run :: Monad m => Solver m c -> [c] -> m (CHRState c)
 run solver query = run' solver query newCHRState
+
 
 run' :: Monad m => Solver m c -> [c] -> CHRState c -> m (CHRState c)
 run' _      []     state = pure state
 run' solver (c:cs) state = do
   let (i, state') = fresh state
   call solver i c (add i c state') >>= run' solver cs
+
+
+evaluate :: Monad m => Solver m c -> [c] -> m [c]
+evaluate solver = run solver
+  >=> _constraints >>> Map.toList >>> unzip >>> snd >>> pure
 
 
 call :: Monad m => Solver m c -> Int -> c -> CHRState c -> m (CHRState c)
