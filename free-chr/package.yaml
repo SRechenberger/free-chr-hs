@@ -1,0 +1,36 @@
+name: free-chr
+version: 0.1.0.0
+license: BSD3
+author: Sascha Rechenberger
+maintainer: sascha.rechenberger@uni-ulm.de
+copyright: 2022 Sascha Rechenberger
+
+synopsis: Free-CHR implementation in Haskell
+category: Language
+
+
+dependencies:
+  - base
+  - containers
+  - lens
+  - mtl
+  - extra
+
+default-extensions:
+  - TypeFamilies
+  - FlexibleContexts
+
+library:
+  source-dirs:
+    - src
+    - examples
+
+tests:
+  free-chr-test:
+    main: Spec.hs
+    source-dirs:
+      - test
+      - examples
+    dependencies:
+      - free-chr
+      - hspec
