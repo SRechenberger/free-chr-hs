@@ -11,9 +11,6 @@ type Body m c = [c] -> [m [c]]
 true :: Monad m => Guard m c
 true = const $ pure True
 
-false :: Monad m => Guard m c
-false = const $ pure False
-
 top :: Monad m => Body m c
 top = const []
 
@@ -37,6 +34,14 @@ clean n k r g = rule n k r g top
 clean' :: (Solver solver, Monad m)
   => String -> Head c -> Head c -> solver m c
 clean' n k r = rule n k r true top
+
+inconsistent :: (Solver solver, MonadError () m)
+  => String -> Head c -> Guard m c -> solver m c
+inconsistent n h g = simplify n h g bottom
+
+inconsistent' :: (Solver solver, MonadError () m)
+  => String -> Head c -> solver m c
+inconsistent' n h = simplify n h true bottom
 
 propagate :: (Solver solver, Monad m)
   => String -> Head c -> Guard m c -> Body m c -> solver m c
