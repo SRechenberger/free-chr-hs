@@ -111,6 +111,7 @@ check :: String -> [Int] -> CHRState c -> Bool
 check r is = (^. history . to (Set.member (r, is))) >>> not
 
 
+-- TODO Does not yet prioritize matchings with the callee in the removed head.
 match :: Int -> a -> [a -> Bool] -> [(Int, a)] -> [[(Int, a)]]
 match i c ps as = [ as'' |
     as' <- subsequences as,
