@@ -1,17 +1,17 @@
 module CHR.Examples.Generic.Identity where
 
-import CHR.Execution.Generic.Simple
+import CHR.Execution.Generic
 import CHR.Execution.Generic.Helpers
 
 import Data.Functor.Identity
 
-gcd' :: Solver Identity Int
+gcd' :: Solver solver => solver Identity Int
 gcd' =
   remove' "zero" [(<= 0)] <.>
   rule "subtract" [(> 0)] [(> 0)]
     (\[n, m] -> pure $ n <= m)
     (\[n, m] -> [pure $ [m - n]])
 
-nub' :: Eq a => Solver Identity a
+nub' :: (Solver solver, Eq a) => solver Identity a
 nub' = clean "remove duplicate" [wildcard] [wildcard]
   (\[x, y] -> pure $ x == y)

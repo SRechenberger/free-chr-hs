@@ -2,6 +2,8 @@
 
 module CHR.Execution.Generic.Simple where
 
+import CHR.Execution.Generic
+
 import Data.Maybe (isJust)
 import Data.List (subsequences, permutations)
 import Data.Foldable.Extra (findM)
@@ -42,16 +44,39 @@ newCHRState = CHRState
   }
 
 
-newtype Solver m c = Solver
-  { runSolver :: Int -> c -> CHRState c -> m (Maybe ([m [c]], CHRState c)) }
+newtype SimpleSolver m c = SimpleSolver
+  { runSimpleSolver ::
+    Int -> c -> CHRState c -> m (Maybe ([m [c]], CHRState c)) }
 
 
-instance Monad m => Semigroup (Solver m c) where
-  f <> g = Solver { runSolver = solve }
+instance Monad m => Semigroup (SimpleSolver m c) where
+  f <> g = SimpleSolver { runSimpleSolver = solve }
     where
       solve i c s = do
-        rf <- runSolver f i c s
-        maybe (runSolver g i c s) (pure >>> pure) rf
+        rf <- runSimpleSolver f i c s
+        maybe (runSimpleSolver g i c s) (pure >>> pure) rf
+
+
+instance Solver SimpleSolver where
+  rule name kept removed guard body = SimpleSolver
+      { runSimpleSolver = solver }
+    where
+      solver i c state = do
+        matching <- findM
+          (unzip
+          >>> bimap (\is -> pure $ check name is state) guard
+          >>> uncurry (liftA2 (&&)))
+          $ match i c (kept <> removed) (Map.toList $ state^.constraints)
+        pure $ do
+          m <- matching
+          let (is, cs) = unzip m
+          let rs = drop (length kept) is
+          let state' = state
+                      & kills rs
+                      & (if length rs > 0 then id else record name is)
+          pure (body cs, state')
+
+  (<.>) = (<>)
 
 
 fresh :: CHRState c -> (Int, CHRState c)
@@ -95,54 +120,26 @@ match i c ps as = [ as'' |
     i `elem` (map fst as'') ]
 
 
-rule :: (Monad m)
-     => String
-     -> [c -> Bool] -> [c -> Bool]
-     -> ([c] -> m Bool)
-     -> ([c] -> [m [c]])
-     -> Solver m c
-rule name kept removed guard body = Solver { runSolver = solver }
-  where
-    solver i c state = do
-      matching <- findM
-        (unzip
-        >>> bimap (\is -> pure $ check name is state) guard
-        >>> uncurry (liftA2 (&&)))
-        $ match i c (kept <> removed) (Map.toList $ state^.constraints)
-      pure $ do
-        m <- matching
-        let (is, cs) = unzip m
-        let rs = drop (length kept) is
-        let state' = state
-                    & kills rs
-                    & (if length rs > 0 then id else record name is)
-        pure (body cs, state')
-
-
-(<.>) :: Monad m => Solver m c -> Solver m c -> Solver m c
-(<.>) = (<>)
-
-
-run :: Monad m => Solver m c -> [c] -> m (CHRState c)
+run :: Monad m => SimpleSolver m c -> [c] -> m (CHRState c)
 run solver query = run' solver query newCHRState
 
 
-run' :: Monad m => Solver m c -> [c] -> CHRState c -> m (CHRState c)
+run' :: Monad m => SimpleSolver m c -> [c] -> CHRState c -> m (CHRState c)
 run' _      []     state = pure state
 run' solver (c:cs) state = do
   let (i, state') = fresh state
   call solver i c (add i c state') >>= run' solver cs
 
 
-evaluate :: Monad m => Solver m c -> [c] -> m [c]
+evaluate :: Monad m => SimpleSolver m c -> [c] -> m [c]
 evaluate solver = run solver
   >=> _constraints >>> Map.toList >>> unzip >>> snd >>> pure
 
 
-call :: Monad m => Solver m c -> Int -> c -> CHRState c -> m (CHRState c)
+call :: Monad m => SimpleSolver m c -> Int -> c -> CHRState c -> m (CHRState c)
 call solver i c state
   | isAlive i state = do
-    mr <- runSolver solver i c state
+    mr <- runSimpleSolver solver i c state
     case mr of
       Nothing            -> pure state
       Just (mqs, state') -> do
