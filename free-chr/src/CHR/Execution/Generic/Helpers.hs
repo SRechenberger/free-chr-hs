@@ -1,6 +1,6 @@
 module CHR.Execution.Generic.Helpers where
 
-import CHR.Execution.Generic
+import CHR.Execution.Generic.Simple
 
 import Control.Monad.Except
 

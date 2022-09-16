@@ -7,7 +7,7 @@ import Test.Hspec.QuickCheck
 
 import Test.QuickCheck (NonEmptyList (..), getPositive, getNonNegative, verbose)
 
-import CHR.Execution.Generic
+import CHR.Execution.Generic.Simple
 import CHR.Examples.Generic.Identity
 import CHR.Examples.Generic.Writer
 import CHR.Examples.Generic.List
@@ -22,7 +22,7 @@ import Control.Monad.Writer
 
 spec :: Spec
 spec = do
-  describe "CHR.Execution.Generic.match" $ do
+  describe "CHR.Execution.Generic.Simple.match" $ do
     it "finds a valid matching" $ do
       let s = [(0, 120), (1, 36), (2, 12)]
       let h = [(> 0), (> 0)]
