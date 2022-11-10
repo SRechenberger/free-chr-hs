@@ -1,7 +1,6 @@
 module CHR.Examples.Generic.FiniteDomain where
 
-import CHR.Execution.Generic
-import CHR.Execution.Generic.Helpers
+import CHR
 
 import Data.List
 

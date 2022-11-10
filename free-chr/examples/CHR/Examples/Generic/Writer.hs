@@ -1,7 +1,6 @@
 module CHR.Examples.Generic.Writer where
 
-import CHR.Execution.Generic
-import CHR.Execution.Generic.Helpers
+import CHR
 
 import Control.Monad.Writer
 

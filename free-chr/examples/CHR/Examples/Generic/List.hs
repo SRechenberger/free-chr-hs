@@ -1,7 +1,6 @@
 module CHR.Examples.Generic.List where
 
-import CHR.Execution.Generic
-import CHR.Execution.Generic.Helpers
+import CHR
 
 data Coin = Unknown | Heads | Tails deriving (Show, Eq)
 

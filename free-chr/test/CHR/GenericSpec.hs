@@ -1,14 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module CHR.Execution.GenericSpec where
+module CHR.GenericSpec where
 
 import Test.Hspec
 import Test.Hspec.QuickCheck
 
 import Test.QuickCheck (NonEmptyList (..), getPositive, getNonNegative, verbose)
 
-import CHR.Execution.Generic
-import CHR.Execution.Generic.Simple
+import CHR
+
 import CHR.Examples.Generic.Identity
 import CHR.Examples.Generic.Writer
 import CHR.Examples.Generic.List

@@ -1,4 +1,4 @@
-module CHR.Execution.Generic where
+module CHR.Generic.Solver where
 
 class Solver (solver :: (* -> *) -> * -> *) where
   rule :: (Monad m)

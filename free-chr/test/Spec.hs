@@ -1,7 +1,7 @@
 import Test.Hspec
 
-import qualified CHR.Execution.GenericSpec as GenericExecution
+import qualified CHR.GenericSpec as Generic
 
 main :: IO ()
 main = hspec $ do
-  GenericExecution.spec
+  Generic.spec

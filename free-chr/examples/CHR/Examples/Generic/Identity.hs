@@ -1,7 +1,6 @@
 module CHR.Examples.Generic.Identity where
 
-import CHR.Execution.Generic
-import CHR.Execution.Generic.Helpers
+import CHR
 
 import Data.Functor.Identity
 

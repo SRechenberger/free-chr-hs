@@ -1,8 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module CHR.Execution.Generic.Simple where
+module CHR.Generic.Default where
 
-import CHR.Execution.Generic
+import CHR.Generic.Solver
 
 import Data.Maybe (isJust)
 import Data.List (subsequences, permutations)
