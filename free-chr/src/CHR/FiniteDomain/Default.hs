@@ -13,7 +13,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 -- import Data.Maybe (isJust)
--- import Data.List (subsequences, permutations)
+import Data.List (findIndices)
 import Data.Foldable.Extra (findM)
 -- import Data.Bifunctor (bimap)
 
@@ -58,12 +58,39 @@ instance FDSolver DefaultFDSolver where
     (<.>) = (<>)
 
 
--- TODO
+
+selects :: (a -> Bool) -> [a] -> [(a, [a])]
+selects p [] = []
+selects p (x:xs) = (if p x then ((x, xs) :) else id) 
+    $ map (second (x:)) (selects p xs)
+
+
 match :: Int -> FDConstraint s v
       -> [FDConstraint s v -> Bool] -> [FDConstraint s v -> Bool]
-      -> [(Int, a)] -> [(Int, a)]
-      -> [[(Int, a)]]
-match i c ks rs hcs cs = error "Not yet implemented"
+      -> [(Int, FDConstraint s v)] -> [(Int, FDConstraint s v)]
+      -> [[(Int, FDConstraint s v)]]
+match i c ks rs hcs cs = case (findIndices ($ c) rs, findIndices ($ c) ks) of
+    ([], []) -> []
+    ([], xs) -> do
+        x <- xs
+        ((hcs', cs'), ksMatched) <- m ks (reverse hcs) cs x
+        (_, rsMatched) <- m rs (reverse hcs') cs' (-1)
+        pure (ksMatched <> rsMatched)
+    (xs, []) -> do
+        x <- xs
+        ((hcs', cs'), rsMatched) <- m rs hcs cs x
+        (_, ksMatched) <- m ks (reverse hcs) cs (-1)
+        pure (ksMatched <> rsMatched)
+    (xs, ys) -> error "TODO"
+  where
+    m []     hcs cs _   = [((hcs, cs), [])]
+    m (h:hs) hcs cs idx
+      | idx == 0  = second ((i,c):) <$> m hs hcs cs (idx-1)
+      | otherwise = case (selects (h . snd) hcs, selects (h . snd) cs) of
+          ([], []) -> []
+          ([], ss) -> [(rests, p : ps) | (p, cs') <- ss, (rests, ps) <- m hs hcs cs' (idx-1)]
+          (ss, []) -> [(rests, p : ps) | (p, hcs') <- ss, (rests, ps) <- m hs hcs' cs (idx-1)]
+          (ss, ts) -> error "TODO"
 
 
 run :: (Monad m, Eq s, Eq v) => DefaultFDSolver m s v -> [FDConstraint s v] -> m (FDState s v)
