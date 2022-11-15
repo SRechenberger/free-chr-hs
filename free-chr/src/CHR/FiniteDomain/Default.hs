@@ -126,7 +126,4 @@ call solver i c state
 evaluate :: (Monad m, Eq s, Eq v)
          => DefaultFDSolver m s v -> [FDConstraint s v] -> m [FDConstraint s v]
 evaluate solver = run solver
-  >=> (_hConstraints &&& _constraints)
-  >>> (concat . map (Map.toList . snd) . Map.toList) `bimap` Map.toList
-  >>> uncurry (<>)
-  >>> unzip >>> snd >>> pure
+  >=> getConstraints >>> pure

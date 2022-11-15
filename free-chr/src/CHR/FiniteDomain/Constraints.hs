@@ -22,3 +22,10 @@ isEq _        = False
 
 inEnum :: (Eq s, Ord v) => s -> [v] -> FDConstraint s v
 inEnum s vs = s `InEnum` Set.fromList vs
+
+domain :: FDConstraint s v -> [v]
+domain (InEnum s vs) = Set.toList vs
+domain _             = error "No Domain Constraint"
+
+hasDomain :: Eq v => [v] -> FDConstraint s v -> Bool
+hasDomain vs = (vs ==) . domain

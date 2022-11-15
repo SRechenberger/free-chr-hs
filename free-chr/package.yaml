@@ -1,3 +1,4 @@
+
 name: free-chr
 version: 0.1.0.0
 license: BSD3
@@ -15,10 +16,12 @@ dependencies:
   - lens
   - mtl
   - extra
+  - MonadRandom
 
 default-extensions:
   - TypeFamilies
   - FlexibleContexts
+  - DeriveGeneric
 
 library:
   source-dirs:

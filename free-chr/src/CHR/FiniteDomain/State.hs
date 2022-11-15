@@ -12,6 +12,7 @@ import qualified Data.Set as Set
 
 import Control.Lens
 import Control.Arrow
+import Data.Bifunctor (bimap)
 
 
 data FDState s v = FDState
@@ -36,6 +37,14 @@ newFDState = FDState
   , _alive        = Set.empty
   , _history      = Set.empty
   }
+
+
+getConstraints :: FDState s v -> [FDConstraint s v]
+getConstraints =
+  _hConstraints &&& _constraints
+  >>> (concat . map (Map.toList . snd) . Map.toList) `bimap` Map.toList
+  >>> uncurry (<>)
+  >>> unzip >>> snd
 
 
 fresh :: FDState s c -> (Int, FDState s c)
