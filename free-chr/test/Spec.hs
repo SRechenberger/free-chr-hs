@@ -6,4 +6,4 @@ import qualified CHR.FiniteDomainSpec as FiniteDomain
 main :: IO ()
 main = hspec $ do
   Generic.spec
-  -- FiniteDomain.spec
+  FiniteDomain.spec

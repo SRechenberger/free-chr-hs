@@ -6,7 +6,7 @@ import qualified Data.Set as Set
 data FDConstraint s a
     = InEnum s (Set a)
     | Eq s s
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 entropy :: FDConstraint s a -> Maybe Int
 entropy (InEnum _ vs) = Just $ Set.size vs
@@ -19,3 +19,6 @@ isInEnum _            = False
 isEq :: FDConstraint s a -> Bool
 isEq (Eq _ _) = True
 isEq _        = False
+
+inEnum :: (Eq s, Ord v) => s -> [v] -> FDConstraint s v
+inEnum s vs = s `InEnum` Set.fromList vs

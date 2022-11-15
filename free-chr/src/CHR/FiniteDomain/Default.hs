@@ -12,13 +12,12 @@ import Control.Monad
 import Data.Map (Map)
 import qualified Data.Map as Map
 
--- import Data.Maybe (isJust)
 import Data.List (findIndices)
 import Data.Foldable.Extra (findM)
--- import Data.Bifunctor (bimap)
 
 import Control.Applicative (liftA2)
 
+-- import Debug.Trace
 
 newtype DefaultFDSolver m s v = FDSolver 
     { runFDSolver ::
@@ -49,6 +48,9 @@ instance FDSolver DefaultFDSolver where
             pure $ do
                 m <- matching
                 let (is, cs) = unzip m
+                -- traceM $ name <> " " <> show is
+                -- traceM $ show (_hConstraints s, _constraints s)
+                -- traceM $ show $ _history s
                 let rs = drop (length kept) is
                 let s' = s
                         & kills rs
@@ -69,28 +71,29 @@ match :: Int -> FDConstraint s v
       -> [FDConstraint s v -> Bool] -> [FDConstraint s v -> Bool]
       -> [(Int, FDConstraint s v)] -> [(Int, FDConstraint s v)]
       -> [[(Int, FDConstraint s v)]]
-match i c ks rs hcs cs = case (findIndices ($ c) rs, findIndices ($ c) ks) of
-    ([], []) -> []
-    ([], xs) -> do
-        x <- xs
-        ((hcs', cs'), ksMatched) <- m ks (reverse hcs) cs x
-        (_, rsMatched) <- m rs (reverse hcs') cs' (-1)
-        pure (ksMatched <> rsMatched)
-    (xs, []) -> do
-        x <- xs
-        ((hcs', cs'), rsMatched) <- m rs hcs cs x
-        (_, ksMatched) <- m ks (reverse hcs) cs (-1)
-        pure (ksMatched <> rsMatched)
-    (xs, ys) -> error "TODO"
+match i c ks rs hcs cs = srs <> sks
   where
+    (xs, ys) = (findIndices ($ c) ks, findIndices ($ c) rs)
+
+    sks = [ ksMatched <> rsMatched 
+      | x <- xs,
+        ((hcs', cs'), ksMatched) <- m ks (reverse hcs) cs x,
+        (_, rsMatched) <- m rs (reverse hcs') cs' (-1)
+      ]
+    srs = [ ksMatched <> rsMatched
+      | y <- ys,
+        ((hcs', cs'), rsMatched) <- m rs hcs cs y,
+        (_, ksMatched) <- m ks (reverse hcs) cs (-1)
+      ]
+
     m []     hcs cs _   = [((hcs, cs), [])]
     m (h:hs) hcs cs idx
       | idx == 0  = second ((i,c):) <$> m hs hcs cs (idx-1)
-      | otherwise = case (selects (h . snd) hcs, selects (h . snd) cs) of
-          ([], []) -> []
-          ([], ss) -> [(rests, p : ps) | (p, cs') <- ss, (rests, ps) <- m hs hcs cs' (idx-1)]
-          (ss, []) -> [(rests, p : ps) | (p, hcs') <- ss, (rests, ps) <- m hs hcs' cs (idx-1)]
-          (ss, ts) -> error "TODO"
+      | otherwise = let
+          check = bimap (/= i) h >>> uncurry (&&)
+          (ss, ts) = (selects check hcs, selects check cs)
+        in [(rests, p : ps) | (p, cs') <- ts, (rests, ps) <- m hs hcs cs' (idx-1)] 
+           <> [(rests, p : ps) | (p, hcs') <- ss, (rests, ps) <- m hs hcs' cs (idx-1)]
 
 
 run :: (Monad m, Eq s, Eq v) => DefaultFDSolver m s v -> [FDConstraint s v] -> m (FDState s v)
