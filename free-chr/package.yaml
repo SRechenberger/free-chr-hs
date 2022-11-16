@@ -18,6 +18,7 @@ dependencies:
   - extra
   - MonadRandom
   - random-shuffle
+  - aeson
 
 default-extensions:
   - TypeFamilies

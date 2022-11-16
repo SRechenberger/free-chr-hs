@@ -16,7 +16,7 @@ import Data.Maybe (fromJust)
 import CHR.Helpers
 import CHR.FiniteDomain
 import CHR.Examples.FiniteDomain.EnumConstraints
-import CHR.Examples.FiniteDomain.WaveFunctionCollaps
+import CHR.Examples.FiniteDomain.WaveFunctionCollapse
 
 
 data Vars = A | B | C | D
@@ -30,8 +30,8 @@ instance (Arbitrary s, Ord v, Arbitrary v) => Arbitrary (FDConstraint s v) where
       0 -> InEnum <$> arbitrary <*> arbitrary
       1 -> Eq <$> arbitrary <*> arbitrary
 
-instance Arbitrary Tile where
-  arbitrary = toEnum . (`mod` fromEnum (maxBound :: Tile)) <$> arbitrary
+instance Arbitrary LandscapeTile where
+  arbitrary = toEnum . (`mod` fromEnum (maxBound :: LandscapeTile)) <$> arbitrary
 
 spec = do
   describe "CHR.FiniteDomains.match" $ do
@@ -91,25 +91,11 @@ spec = do
           , B `Eq` A, C `Eq` B, C `Eq` A ]
 
   describe "CHR.Examples.FiniteDomains.WaveFunctionCollapse" $ do
-    prop "outOfbounds removes out of bounds constraints" $ \(ps :: NonEmptyList (FDConstraint Point Tile)) -> do
+    prop "outOfbounds removes out of bounds constraints" $ \(ps :: NonEmptyList (FDConstraint Point LandscapeTile)) -> do
       let q = [IdentifierBounds (0, 0) (10, 10)] <> (getNonEmpty ps)
       fromJust (evaluate outOfBounds q)
         `shouldMatchList` ([IdentifierBounds (0, 0) (10, 10)] <> [c | c <- getNonEmpty ps, all (\(x, y) -> between 0 10 x && between 0 10 y) (identifiers c)])
     
     prop "wfc generates a valid grid" $ \seed -> do
       let dim = (10, 10)
-      shouldSatisfy (evalRand (uncurry wfc dim) (mkStdGen seed)) $ maybe False $ \grid ->
-        all
-          (\(p, d) -> 
-            length d == 1
-            && all (\q -> maybe True (\tn -> allowed d tn) (Map.lookup q grid)) (neighbors p))
-          (Map.toList grid)
-        
-allowed :: [Tile] -> [Tile] -> Bool
-allowed ts ts' = and $ allowed' <$> ts <*> ts'
-  where
-    allowed' Water     t | t `elem` [Water, Grass]              = True
-    allowed' Forrest   t | t `elem` [Forrest, Grass, Mountains] = True
-    allowed' Mountains t | t `elem` [Forrest, Grass, Mountains] = True
-    allowed' Grass     _                                        = True
-    allowed' _         _                                        = False
+      shouldSatisfy (evalRand (uncurry wfc dim) (mkStdGen seed)) $ maybe False $ (validGrid :: Grid LandscapeTile -> Bool)
