@@ -17,7 +17,7 @@ import Data.Foldable.Extra (findM)
 
 import Control.Applicative (liftA2)
 
--- import Debug.Trace
+import Debug.Trace
 
 newtype DefaultFDSolver m s v = FDSolver 
     { runFDSolver ::

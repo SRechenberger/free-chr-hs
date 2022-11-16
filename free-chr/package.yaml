@@ -17,11 +17,13 @@ dependencies:
   - mtl
   - extra
   - MonadRandom
+  - random-shuffle
 
 default-extensions:
   - TypeFamilies
   - FlexibleContexts
   - DeriveGeneric
+  - ScopedTypeVariables
 
 library:
   source-dirs:

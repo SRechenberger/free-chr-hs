@@ -2,19 +2,36 @@ module CHR.FiniteDomainSpec where
 
 import Test.Hspec
 import Test.Hspec.QuickCheck
-import Test.QuickCheck (NonEmptyList (..), getPositive, getNonNegative, verbose)
 import Test.HUnit.Lang (assertFailure)
 
+import Test.QuickCheck (Gen, NonEmptyList (..), getPositive, getNonNegative, Arbitrary (..))
+
+import Control.Monad.Random
+
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.List (sort)
 import Data.Maybe (fromJust)
 
+import CHR.Helpers
 import CHR.FiniteDomain
 import CHR.Examples.FiniteDomain.EnumConstraints
+import CHR.Examples.FiniteDomain.WaveFunctionCollaps
 
 
 data Vars = A | B | C | D
   deriving (Eq, Ord, Show)
+
+
+instance (Arbitrary s, Ord v, Arbitrary v) => Arbitrary (FDConstraint s v) where
+  arbitrary = do
+    i <- (arbitrary :: Gen Int)
+    case i `mod` 2 of
+      0 -> InEnum <$> arbitrary <*> arbitrary
+      1 -> Eq <$> arbitrary <*> arbitrary
+
+instance Arbitrary Tile where
+  arbitrary = toEnum . (`mod` fromEnum (maxBound :: Tile)) <$> arbitrary
 
 spec = do
   describe "CHR.FiniteDomains.match" $ do
@@ -72,3 +89,27 @@ spec = do
         Just r  -> r `shouldMatchList`
           [ A `Eq` B, B `Eq` C, A `Eq` C
           , B `Eq` A, C `Eq` B, C `Eq` A ]
+
+  describe "CHR.Examples.FiniteDomains.WaveFunctionCollapse" $ do
+    prop "outOfbounds removes out of bounds constraints" $ \(ps :: NonEmptyList (FDConstraint Point Tile)) -> do
+      let q = [IdentifierBounds (0, 0) (10, 10)] <> (getNonEmpty ps)
+      fromJust (evaluate outOfBounds q)
+        `shouldMatchList` ([IdentifierBounds (0, 0) (10, 10)] <> [c | c <- getNonEmpty ps, all (\(x, y) -> between 0 10 x && between 0 10 y) (identifiers c)])
+    
+    prop "wfc generates a valid grid" $ \seed -> do
+      let dim = (10, 10)
+      shouldSatisfy (evalRand (uncurry wfc dim) (mkStdGen seed)) $ maybe False $ \grid ->
+        all
+          (\(p, d) -> 
+            length d == 1
+            && all (\q -> maybe True (\tn -> allowed d tn) (Map.lookup q grid)) (neighbors p))
+          (Map.toList grid)
+        
+allowed :: [Tile] -> [Tile] -> Bool
+allowed ts ts' = and $ allowed' <$> ts <*> ts'
+  where
+    allowed' Water     t | t `elem` [Water, Grass]              = True
+    allowed' Forrest   t | t `elem` [Forrest, Grass, Mountains] = True
+    allowed' Mountains t | t `elem` [Forrest, Grass, Mountains] = True
+    allowed' Grass     _                                        = True
+    allowed' _         _                                        = False
